@@ -6,10 +6,6 @@ Greylisted, yet a minor upgrade over Voting Handler Fix v2.
 * Maplist support.
 * Minor fixes.
 
-# Fleshpound Party
-
-Do you want more juicy FPs at your face? Enjoy 😊.
-
 ## Installation
 
 ```cpp
