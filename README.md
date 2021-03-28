@@ -2,6 +2,8 @@
 
 Greylisted, yet a minor upgrade over Voting Handler Fix v2.
 
+All credits to [Marco](https://steamcommunity.com/profiles/76561197975509070/). For reference you can use [v2 info](https://forums.tripwireinteractive.com/index.php?threads/mod-voting-handler-fix.43202/).
+
 * Fixed a bug, when forcing a mapswitch as an admin was picking an initial voting.
 * Maplist support.
 * Minor fixes.
@@ -24,6 +26,6 @@ At the moment of 2021.03.27 there are no dependencies.
 EditPackages=KFMapVoteV3
 ```
 
-## Steam workshop
+## Config Files
 
-placeholder
+[KFMapVote.ini](Configs/KFMapVote.ini 'main config')
