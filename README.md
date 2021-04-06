@@ -1,5 +1,7 @@
 # Voting Handler Fix v3
 
+![GitHub all releases](https://img.shields.io/github/downloads/Insulting-Pros/KFMapVoteV3/total)
+
 Greylisted, yet a minor upgrade over Voting Handler Fix v2.
 
 All credits to [Marco](https://steamcommunity.com/profiles/76561197975509070/). For reference you can use [v2 info](https://forums.tripwireinteractive.com/index.php?threads/mod-voting-handler-fix.43202/).
