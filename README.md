@@ -1,6 +1,6 @@
 # Voting Handler Fix v3
 
-![GitHub all releases](https://img.shields.io/github/downloads/Insulting-Pros/KFMapVoteV3/total)
+![GitHub all releases](https://img.shields.io/github/downloads/InsultingPros/KFMapVoteV3/total)
 
 Greylisted, yet a minor upgrade over Voting Handler Fix v2.
 
