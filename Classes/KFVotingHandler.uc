@@ -433,17 +433,17 @@ function bool IsValidVote(int MapIndex, int GameIndex)
 	local string A,B;
 	local array<string> PL;
 	local int i;
-	
+
 	A = GameConfig[GameIndex].Prefix;
 	Divide(A,"|",A,B);
 	Split(A, ",", PL);
-	
+
 	for( i=(PL.Length-1); i>=0; --i )
 		if( Left(MapList[MapIndex].MapName, len(PL[i]))~=PL[i] )
 			break;
 	if( i==-1 )
 		return false;
-	
+
 	if( B!="" )
 	{
 		Split(B, ",", PL);
@@ -510,7 +510,7 @@ function GetDefaultMap(out int mapidx, out int gameidx)
 		{
 			// give up after 100 unsuccessful attempts.
 			// find the first map that matches up to default gametype
-            for(i=0;i<=MapCount;i++)
+            for(i=0; i<MapCount; ++i)
 			{
 				if( MapList[i].bEnabled )
 				{
@@ -534,7 +534,7 @@ function GetDefaultMap(out int mapidx, out int gameidx)
 
 			if(bLoop) // still didnt find any, then find the first enabled map and find its gameconfig
 			{
-				for( i=0; (i<=MapCount && bLoop); i++ )
+				for( i=0; (i<MapCount && bLoop); ++i )
 				{
 					if( MapList[i].bEnabled )
 					{
@@ -578,8 +578,16 @@ function GetDefaultMap(out int mapidx, out int gameidx)
 			break;
 		}
 	}
-	gameidx = GCIdx;
-	mapidx = i;
+
+	if (i < MapCount) {
+		mapidx = i;
+		gameidx = GCIdx;
+	}
+	else {
+		// something bad happened
+		mapidx = 0;
+		gameidx = DefaultGameConfig;
+	}
 	log("Default Map Choosen = " $ MapList[mapidx].MapName $ "(" $ GameConfig[gameidx].Acronym $ ")",'MapVoteDebug');
 }
 

@@ -1,5 +1,7 @@
 class KFXMapListLoader extends DefaultMapListLoader;
 
+var array<string> LoadedPrefixes;
+
 //------------------------------------------------------------------------------------------------
 function LoadMapList(xVotingHandler VotingHandler)
 {
@@ -66,7 +68,16 @@ function LoadMapList(xVotingHandler VotingHandler)
 function LoadFromPreFix(string Prefix, xVotingHandler VotingHandler)
 {
 	local string FirstMap,NextMap,MapName,TestMap;
+	local int i, count;
 
+	for (i = 0; i < LoadedPrefixes.Length; ++i) {
+		if (LoadedPrefixes[i] ~= Prefix)
+			return;
+	}
+	LoadedPrefixes.insert(i,1);
+	LoadedPrefixes[i] = Prefix;
+
+	StopWatch(false); // reset timer
 	FirstMap = Level.GetMapName(PreFix, "", 0);
 	NextMap = FirstMap;
 	while(!(FirstMap ~= TestMap))
@@ -79,7 +90,10 @@ function LoadFromPreFix(string Prefix, xVotingHandler VotingHandler)
 
 		NextMap = Level.GetMapName(PreFix, NextMap, 1);
 		TestMap = NextMap;
+		++count;
 	}
+	StopWatch(true); // log elapsed time
+	log(string(count) $ " '"$Prefix$"' maps loaded", 'MapVote');
 }
 //================================================================================================
 //                                    Configuration
