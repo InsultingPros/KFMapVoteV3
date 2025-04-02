@@ -1,6 +1,7 @@
 class KFXMapListLoader extends DefaultMapListLoader;
 
 var array<string> LoadedPrefixes;
+var string DefaultMapExt;
 
 //------------------------------------------------------------------------------------------------
 function LoadMapList(xVotingHandler VotingHandler)
@@ -64,12 +65,75 @@ function LoadMapList(xVotingHandler VotingHandler)
 		}
 	}
 }
+
+//------------------------------------------------------------------------------------------------
+function LoadFromMapList(string MapListType, xVotingHandler VotingHandler)
+{
+	local string Mutators,GameOptions;
+	local class<MapList> MapListClass;
+	local string MapName;
+	local array<string> Parts;
+	local array<string> Maps;
+	local int x,p,i;
+	local int extlen;
+
+	MapListClass = class<MapList>(DynamicLoadObject(MapListType, class'Class'));
+	if(MapListClass == none)
+	{
+		Log("___Couldn't load maplist type:"$MaplistType,'MapVote');
+		return;
+	}
+
+	extlen = len(DefaultMapExt);
+	Maps = MapListClass.static.StaticGetMaps();
+	for(i=0;i<Maps.Length;i++)
+	{
+		Mutators = "";
+		GameOptions = "";
+
+		MapName = Maps[i];
+
+		// Parse map string incase there are mutator and game options in it
+		// DOM-Aztec?Game=XGame.xDoubleDom?mutator=XGame.MutVampire,UTSecure.MutUTSecure?WeaponStay=True?Translocator=True?TimeLimit=15
+		// p0       | p1                  | p2                                          | p3            | p4              | p5
+		Parts.Length = 0;
+		p = Split(MapName, "?", Parts);
+		if(p > 1)
+		{
+			MapName = Parts[0];
+			for(x=1;x<Parts.Length;x++)
+			{
+				if(left(Parts[x],8) ~= "mutator=")
+				{
+				Mutators = Mid(Parts[x],8);
+				}
+				else
+				{
+				// ignore the "game" option but add all others to GameOptions
+				if(!(left(Parts[x],5) ~= "Game="))
+				{
+					if(GameOptions == "")
+						GameOptions = Parts[x];
+					else
+						GameOptions = GameOptions $ "?" $ Parts[x];
+				}
+				}
+			}
+		}
+
+		if (Right(MapName, extlen) ~= DefaultMapExt)
+			MapName = Left(MapName, Len(MapName) - extlen); // remove file extension
+		VotingHandler.AddMap(MapName, Mutators, GameOptions);
+	}
+}
 //------------------------------------------------------------------------------------------------
 function LoadFromPreFix(string Prefix, xVotingHandler VotingHandler)
 {
 	local string FirstMap,NextMap,MapName,TestMap;
 	local int i, count;
+	local int extlen;
 
+	extlen = len(DefaultMapExt);
 	for (i = 0; i < LoadedPrefixes.Length; ++i) {
 		if (LoadedPrefixes[i] ~= Prefix)
 			return;
@@ -80,12 +144,10 @@ function LoadFromPreFix(string Prefix, xVotingHandler VotingHandler)
 	StopWatch(false); // reset timer
 	FirstMap = Level.GetMapName(PreFix, "", 0);
 	NextMap = FirstMap;
-	while(!(FirstMap ~= TestMap))
-	{
+	while (!(FirstMap ~= TestMap)) {
 		MapName = NextMap;
-		if( Right(MapName,4)~=".rom" )
-			MapName = Left(MapName,Len(MapName)-4); // remove ".rom"
-
+		if (Right(MapName, extlen) ~= DefaultMapExt)
+			MapName = Left(MapName, Len(MapName) - extlen); // remove file extension
 		VotingHandler.AddMap(MapName, "", "");
 
 		NextMap = Level.GetMapName(PreFix, NextMap, 1);
@@ -106,4 +168,5 @@ static function FillPlayInfo(PlayInfo PlayInfo)
 
 defaultproperties
 {
+	DefaultMapExt=".rom"
 }
