@@ -13,7 +13,7 @@ function InitComponent(GUIController MyController, GUIComponent MyOwner)
 
 function bool LikeClick(GUIComponent Sender)
 {
-	KFVotingReplicationInfo(PlayerOwner().VoteReplicationInfo).SendMapLike(Sender==b_Like);
+	KFVotingReplicationInfo(PlayerOwner().VoteReplicationInfo).SetMapLike(Sender==b_Like);
 	Controller.CloseMenu();
 	return false;
 }
