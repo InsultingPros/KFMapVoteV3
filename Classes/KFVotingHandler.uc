@@ -4,6 +4,9 @@
 class KFVotingHandler extends xVotingHandler
 	Config(KFMapVote);
 
+var config bool bShowMapLike;
+var config bool bSpectatorsCanVote;
+
 struct FMapRepType
 {
 	var int Positive,Negative;
@@ -84,11 +87,15 @@ function SubmitMapVote(int MapIndex, int GameIndex, Actor Voter)
 	local int Index, VoteCount, PrevMapVote, PrevGameVote;
 	local MapHistoryInfo MapInfo;
 	local bool bAdminForce;
+	local PlayerController PC;
+	local PlayerReplicationInfo PRI;
 
 	if(bLevelSwitchPending)
 		return;
 
-	Index = GetMVRIIndex(PlayerController(Voter));
+	PC = PlayerController(Voter);
+	PRI = PC.PlayerReplicationInfo;
+	Index = GetMVRIIndex(PC);
 	if( GameIndex<0 )
 	{
 		bAdminForce = true;
@@ -101,7 +108,7 @@ function SubmitMapVote(int MapIndex, int GameIndex, Actor Voter)
 	if( !IsValidVote(MapIndex, GameIndex) )
 		return;
 
-	if( bAdminForce && (PlayerController(Voter).PlayerReplicationInfo.bAdmin || PlayerController(Voter).PlayerReplicationInfo.bSilentAdmin) )  // Administrator Vote
+	if( bAdminForce && (PRI.bAdmin || PRI.bSilentAdmin) )  // Administrator Vote
 	{
 		TextMessage = lmsgAdminMapChange;
 		TextMessage = Repl(TextMessage, "%mapname%", MapList[MapIndex].MapName $ "(" $ GameConfig[GameIndex].Acronym $ ")");
@@ -124,11 +131,15 @@ function SubmitMapVote(int MapIndex, int GameIndex, Actor Voter)
 		return;
 	}
 
+	if (!bSpectatorsCanVote && PRI.bOnlySpectator && Level.Game.NumPlayers > 0) {
+		return;
+	}
+
 	// check for invalid map, invalid gametype, player isnt revoting same as previous vote, and map choosen isnt disabled
 	if( !MapList[MapIndex].bEnabled || (MVRI[Index].MapVote==MapIndex && MVRI[Index].GameVote==GameIndex) )
 		return;
 
-	log("___" $ Index $ " - " $ PlayerController(Voter).PlayerReplicationInfo.PlayerName $ " voted for " $ MapList[MapIndex].MapName $ "(" $ GameConfig[GameIndex].Acronym $ ")",'MapVote');
+	log("___" $ Index $ " - " $ PRI.PlayerName $ " voted for " $ MapList[MapIndex].MapName $ "(" $ GameConfig[GameIndex].Acronym $ ")",'MapVote');
 
 	PrevMapVote = MVRI[Index].MapVote;
 	PrevGameVote = MVRI[Index].GameVote;
@@ -139,18 +150,18 @@ function SubmitMapVote(int MapIndex, int GameIndex, Actor Voter)
 	{
 		if(bScoreMode)
 		{
-			VoteCount = GetAccVote(PlayerController(Voter)) + int(GetPlayerScore(PlayerController(Voter)));
+			VoteCount = GetAccVote(PC) + int(GetPlayerScore(PC));
 			TextMessage = lmsgMapVotedForWithCount;
-			TextMessage = repl(TextMessage, "%playername%", PlayerController(Voter).PlayerReplicationInfo.PlayerName );
+			TextMessage = repl(TextMessage, "%playername%", PRI.PlayerName );
 			TextMessage = repl(TextMessage, "%votecount%", string(VoteCount) );
 			TextMessage = repl(TextMessage, "%mapname%", MapList[MapIndex].MapName $ "(" $ GameConfig[GameIndex].Acronym $ ")" );
 			Level.Game.Broadcast(self,TextMessage);
 		}
 		else
 		{
-			VoteCount = GetAccVote(PlayerController(Voter)) + 1;
+			VoteCount = GetAccVote(PC) + 1;
 			TextMessage = lmsgMapVotedForWithCount;
-			TextMessage = repl(TextMessage, "%playername%", PlayerController(Voter).PlayerReplicationInfo.PlayerName );
+			TextMessage = repl(TextMessage, "%playername%", PRI.PlayerName );
 			TextMessage = repl(TextMessage, "%votecount%", string(VoteCount) );
 			TextMessage = repl(TextMessage, "%mapname%", MapList[MapIndex].MapName $ "(" $ GameConfig[GameIndex].Acronym $ ")" );
 			Level.Game.Broadcast(self,TextMessage);
@@ -160,9 +171,9 @@ function SubmitMapVote(int MapIndex, int GameIndex, Actor Voter)
 	{
 		if(bScoreMode)
 		{
-			VoteCount = int(GetPlayerScore(PlayerController(Voter)));
+			VoteCount = int(GetPlayerScore(PC));
 			TextMessage = lmsgMapVotedForWithCount;
-			TextMessage = repl(TextMessage, "%playername%", PlayerController(Voter).PlayerReplicationInfo.PlayerName );
+			TextMessage = repl(TextMessage, "%playername%", PRI.PlayerName );
 			TextMessage = repl(TextMessage, "%votecount%", string(VoteCount) );
 			TextMessage = repl(TextMessage, "%mapname%", MapList[MapIndex].MapName $ "(" $ GameConfig[GameIndex].Acronym $ ")" );
 			Level.Game.Broadcast(self,TextMessage);
@@ -171,7 +182,7 @@ function SubmitMapVote(int MapIndex, int GameIndex, Actor Voter)
 		{
 			VoteCount =  1;
 			TextMessage = lmsgMapVotedFor;
-			TextMessage = repl(TextMessage, "%playername%", PlayerController(Voter).PlayerReplicationInfo.PlayerName );
+			TextMessage = repl(TextMessage, "%playername%", PRI.PlayerName );
 			TextMessage = repl(TextMessage, "%mapname%", MapList[MapIndex].MapName $ "(" $ GameConfig[GameIndex].Acronym $ ")" );
 			Level.Game.Broadcast(self,TextMessage);
 		}
@@ -186,6 +197,10 @@ function SubmitMapVote(int MapIndex, int GameIndex, Actor Voter)
 function TallyVotes(bool bForceMapSwitch)
 {
 	local int C;
+
+	if (!bSpectatorsCanVote) {
+		super.TallyVotes(bForceMapSwitch);
+	}
 
 	C = Level.Game.NumPlayers;
 	Level.Game.NumPlayers+=Level.Game.NumSpectators;
@@ -205,6 +220,7 @@ function AddMapVoteReplicationInfo(PlayerController Player)
 	}
 
 	M.PlayerID = Player.PlayerReplicationInfo.PlayerID;
+	M.bShowMapLike = bShowMapLike;
 	MVRI[MVRI.Length] = M;
 }
 
@@ -695,5 +711,7 @@ function UpdateConfigArrayItem(string ConfigArrayName, int RowIndex, int ColumnI
 
 defaultproperties
 {
-	bMatchSetup=true
+	bMatchSetup=false
+	bShowMapLike=false
+	bSpectatorsCanVote=true
 }

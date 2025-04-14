@@ -11,13 +11,16 @@ var array<string> RepArray,SortedArray; // Displayed rep string
 var sound AnnounceSnds[13];
 var byte MapRepVote;
 var bool bClientHasInit;
+var bool bShowMapLike;
 
 replication
 {
+	reliable if( Role==ROLE_Authority && bNetInitial )
+		bShowMapLike;
 	reliable if( Role==ROLE_Authority )
 		ReceiveMapInfoRep;
 	reliable if( Role<ROLE_Authority )
-		SendMapLike;
+		SendMapRepVote;
 }
 
 simulated final function InitClient()
@@ -64,7 +67,9 @@ simulated function OpenWindow()
 	if( GetController().FindMenuByClass(Class'KFMapVotingPageX')==None ) // Only open when aren't already open.
 	{
 		GetController().OpenMenu(string(Class'KFMapVotingPageX'));
-		GetController().OpenMenu(string(Class'MVLikePage'));
+		if (bShowMapLike) {
+			GetController().OpenMenu(string(Class'MVLikePage'));
+		}
 	}
 }
 function TickedReplication_MapList(int Index, bool bDedicated)
@@ -135,15 +140,29 @@ simulated final function InitRepStr( int i, KFVotingHandler.FMapRepType Rep )
 	}
 }
 
-function SendMapLike( bool bLiked )
+simulated function bool SetMapLike(bool bLiked)
 {
-	if( bLiked )
-		MapRepVote = 1;
-	else MapRepVote = 2;
+	local byte NewValue;
+
+	NewValue = 2 - byte(bLiked);
+	if (NewValue == MapRepVote)
+		return false;
+
+
+	MapRepVote = NewValue;
+	SendMapRepVote(MapRepVote);
+	return true;
 }
+
+function SendMapRepVote(byte value) {
+	MapRepVote = value;
+}
+
 
 defaultproperties
 {
+	bShowMapLike=false
+
 	AnnounceSnds(0)=one
 	AnnounceSnds(1)=two
 	AnnounceSnds(2)=three
